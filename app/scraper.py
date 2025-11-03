@@ -4,21 +4,24 @@ import requests
 from bs4 import BeautifulSoup
 import re
 from urllib.parse import urljoin
+import time
 
 TARGET_URLS = {
-    "Igarassu": "https://www.ifpe.edu.br/campus/igarassu/noticias",
-    "Recife": "https://www.ifpe.edu.br/campus/recife/noticias",
-    "Jaboatão": "https://www.ifpe.edu.br/campus/jaboatao/noticias",
-    "Notícias Gerais": "https://www.ifpe.edu.br/noticias"
+    "Igarassu": "https://portal.ifpe.edu.br/igarassu/noticias",
+    "Recife": "https://portal.ifpe.edu.br/recife/noticias",
+    "Jaboatao": "https://portal.ifpe.edu.br/jaboatao/noticias",
+    "Noticias Gerais": "https://portal.ifpe.edu.br/noticias"
 }
 
 HEADERS = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+    'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
 }
 
 def get_soup(url):
     try:
-        response = requests.get(url, headers=HEADERS, timeout=10)
+        response = requests.get(url, headers=HEADERS, timeout=15)
         response.raise_for_status()
         return BeautifulSoup(response.text, 'html.parser')
     except requests.RequestException as e:
@@ -26,77 +29,108 @@ def get_soup(url):
         return None
 
 def parse_full_article_content(article_url):
+    """Extrai o conteudo completo de uma noticia"""
     soup = get_soup(article_url)
     if not soup:
         return ""
-
-    content_element = soup.find('div', id='parent-fieldname-text')
+    
+    # Procura pelo conteudo principal do artigo
+    content_element = soup.find('div', class_='entry-content')
     
     if content_element:
         paragrafos = content_element.find_all('p')
-        content = "\n".join([p.get_text(strip=True) for p in paragrafos])
-        return re.sub(r'\s+', ' ', content).strip()
+        if paragrafos:
+            content = "\n".join([p.get_text(strip=True) for p in paragrafos])
+            return re.sub(r'\s+', ' ', content).strip()
     
-    print(f"Aviso: Não foi possível encontrar o conteúdo principal em {article_url}")
-    return ""
+    return "Conteudo nao disponivel"
 
 def scrape_campus_news(campus_name, list_url):
-    print(f"Iniciando varredura em: {campus_name} ({list_url})")
+    print(f"\n{'='*70}")
+    print(f"Buscando noticias: {campus_name}")
+    print(f"{'='*70}")
+    
     soup = get_soup(list_url)
     if not soup:
         return []
 
     news_list = []
     
-    articles = soup.find_all('article', class_='entry') 
+    # Busca especificamente por <article class="noticia">
+    articles = soup.find_all('article', class_='noticia')
     
-    if not articles:
-         articles = soup.find_all('div', class_='summary')
-
-    print(f"Encontrados {len(articles)} artigos na página.")
-
-    for item in articles:
+    total_encontrados = len(articles)
+    print(f"Total de artigos encontrados: {total_encontrados}")
+    
+    if total_encontrados == 0:
+        print("Nenhum artigo encontrado. A estrutura do site pode ter mudado.\n")
+        return []
+    
+    print(f"\nExtraindo as 5 primeiras noticias:\n")
+    
+    # Processa apenas os 5 primeiros
+    for idx, article in enumerate(articles[:5], 1):
         try:
-            title_element = item.find('a', title=True)
-            if not title_element:
-                 title_element = item.find('class_').find('h2')
-
-            if not title_element:
-                print("Aviso: Item pulado, não foi possível encontrar o título/link.")
-                continue
-
-            titulo = title_element.get_text(strip=True)
+            # Pega o link principal da noticia
+            link = article.find('a', class_='noticia__link')
             
-            url_noticia = urljoin(list_url, title_element['href'])
-
-            date_element = item.find('span', class_='documentPublishedDate')
-            if not date_element:
-                date_element = item.find('span', class_='summary-view-icon')
-
-            data_publicacao = date_element.get_text(strip=True) if date_element else "Data não encontrada"
-
-            print(f"  Extraindo: {titulo}...")
-            conteudo = parse_full_article_content(url_noticia)
-
-            if conteudo:
-                news_data = {
-                    "titulo": titulo,
-                    "data_publicacao": data_publicacao,
-                    "conteudo": conteudo,
-                    "campus": campus_name,
-                    "url": url_noticia
-                }
-                news_list.append(news_data)
+            if not link:
+                print(f"[{idx}] Aviso: Link nao encontrado, pulando...")
+                continue
+            
+            url_noticia = link.get('href', '')
+            
+            if not url_noticia:
+                continue
+            
+            # Pega o titulo
+            titulo_element = article.find('h2', class_='noticia__titulo')
+            
+            if not titulo_element:
+                print(f"[{idx}] Aviso: Titulo nao encontrado, pulando...")
+                continue
+            
+            titulo = titulo_element.get_text(strip=True)
+            
+            # Remove caracteres HTML especiais
+            titulo = titulo.replace('&#8217;', "'").replace('&#8220;', '"').replace('&#8221;', '"')
+            
+            print(f"[{idx}] {titulo}")
+            print(f"    URL: {url_noticia}\n")
+            
+            # Extrai conteudo (desabilitado para velocidade)
+            conteudo = "Conteudo nao extraido (modo rapido)"
+            
+            news_data = {
+                "titulo": titulo,
+                "conteudo": conteudo,
+                "campus": campus_name,
+                "url": url_noticia
+            }
+            news_list.append(news_data)
+            
+            time.sleep(0.3)
 
         except Exception as e:
-            print(f"Erro ao processar um item: {e}")
+            print(f"[{idx}] Erro ao processar item: {e}")
+            continue
 
+    print(f"Total extraido de {campus_name}: {len(news_list)} noticias\n")
+    
     return news_list
 
 def run_full_scrape():
     all_news = []
-    for campus, url in TARGET_URLS.items():
-        all_news.extend(scrape_campus_news(campus, url))
+    print("\n" + "="*70)
+    print("INICIANDO SCRAPER DO IFPE")
+    print("="*70)
     
-    print(f"\n--- Varredura Concluída: {len(all_news)} notícias extraídas ---")
+    for campus, url in TARGET_URLS.items():
+        campus_news = scrape_campus_news(campus, url)
+        all_news.extend(campus_news)
+    
+    print("="*70)
+    print(f"CONCLUIDO: {len(all_news)} noticias extraidas no total")
+    print("="*70 + "\n")
+    
     return all_news
