@@ -1,10 +1,10 @@
 from fastapi import FastAPI, HTTPException
-from database.db import init_db
-from repository.news_repository import (
+from database.database import init_db
+from repository.repository import (
     salvar_noticia, buscar_todas, buscar_por_id,
     atualizar_noticia, deletar_noticia
 )
-from schemas.news_schema import NoticiaCreate, NoticiaUpdate, NoticiaResponse
+from schemas.schema import NoticiaCreate, NoticiaUpdate, NoticiaResponse
 
 app = FastAPI(title="CRUD de Notícias IFPE")
 
