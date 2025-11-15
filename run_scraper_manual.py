@@ -1,4 +1,4 @@
-from app.scraper import run_full_scrape
+from app.scraper.scraper import run_full_scrape
 import json 
 
 if __name__ == "__main__":
