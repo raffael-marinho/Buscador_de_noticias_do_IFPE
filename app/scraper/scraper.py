@@ -3,6 +3,8 @@ from bs4 import BeautifulSoup
 import re
 from urllib.parse import urljoin
 import time
+from app.schemas.schema import Noticia
+from app.repository.repository import salvar_noticia
 
 TARGET_URLS = {
     "Igarassu": "https://portal.ifpe.edu.br/igarassu/noticias",
@@ -98,7 +100,20 @@ def scrape_campus_news(campus_name, list_url):
             
             # Extrai conteudo (desabilitado para velocidade)
             conteudo = "Conteudo nao extraido (modo rapido)"
+
+            html_puro_da_noticia = extract_minified_html_document_from_news(url_noticia)
+
+            news_model = Noticia(
+                titulo=titulo,
+                html_puro=html_puro_da_noticia,
+                conteudo=conteudo,
+                campus=campus_name,
+                url=url_noticia,
+                coletado_em=str(time.time())
+            )
             
+            salvar_noticia(news_model)
+
             news_data = {
                 "titulo": titulo,
                 "conteudo": conteudo,
