@@ -1,5 +1,5 @@
 import re
-from repository.repository import salvar_noticia
+from app.repository.repository import salvar_noticia
 
 def limpar_texto(texto):
     if not texto:

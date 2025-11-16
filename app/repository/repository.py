@@ -1,4 +1,4 @@
-from database.database import get_connection
+from app.database.database import get_connection
 
 def salvar_noticia(noticia):
     conn = get_connection()
