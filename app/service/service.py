@@ -10,9 +10,11 @@ def limpar_texto(texto):
 def tratar_noticia(noticia):
     return {
         "titulo": limpar_texto(noticia.get("titulo", "")),
+        "html_puro": noticia.get("html_puro"),
         "conteudo": limpar_texto(noticia.get("conteudo", "")),
         "campus": noticia.get("campus", "Desconhecido"),
-        "url": noticia.get("url", "")
+        "url": noticia.get("url", ""),
+        "coletado_em": noticia.get("coletado_em")
     }
 
 def processar_lista_de_noticias(lista):
