@@ -99,14 +99,14 @@ def scrape_campus_news(campus_name, list_url):
             print(f"    URL: {url_noticia}\n")
             
             # Extrai conteudo (desabilitado para velocidade)
-            conteudo = "Conteudo nao extraido (modo rapido)"
+            conteudo = extract_main_news_content(soup)
 
-            html_puro_da_noticia = extract_minified_html_document_from_news(url_noticia)
+            dados_da_noticia = extract_relevant_data_from_news(url_noticia)
 
             news_data = {
                 "titulo": titulo,
-                "html_puro": html_puro_da_noticia,
-                "conteudo": conteudo,
+                "html_puro": dados_da_noticia["html_puro"],
+                "conteudo": dados_da_noticia["conteudo"],
                 "campus": campus_name,
                 "url": url_noticia,
                 "coletado_em": str(time.time())
@@ -123,14 +123,26 @@ def scrape_campus_news(campus_name, list_url):
     
     return news_list
 
-def extract_minified_html_document_from_news(news_url):
+def extract_main_news_content(given_soup):
+    main_news_content_element = given_soup.find('div', class_='post__content')
+    extracted_content = ''
+    if not main_news_content_element:
+        return None
+    extracted_content = main_news_content_element.get_text(strip=True)
+    return extracted_content
+
+def extract_relevant_data_from_news(news_url):
     response = requests.get(news_url, headers=HEADERS, timeout=15)
     response.raise_for_status()
     response.encoding = response.apparent_encoding
     response_content = response.text
+
+    news_soup = BeautifulSoup(response_content, 'html.parser')
+    main_news_content = extract_main_news_content(news_soup)
+
     minified_html = re.sub(r">\s+<", "><", response_content)
     minified_html = re.sub(r"\s+", " ", minified_html).strip()
-    return minified_html
+    return {"conteudo": main_news_content, "html_puro": minified_html}
 
 def run_full_scrape():
     all_news = []
