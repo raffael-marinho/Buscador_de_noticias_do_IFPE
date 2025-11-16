@@ -29,3 +29,12 @@ class NoticiaResponse(BaseModel):
     model_config = {
         "from_attributes": True
     }
+
+class Noticia:
+    def __init__(self, titulo, html_puro, conteudo, campus, url, coletado_em):
+        self.titulo = titulo
+        self.html_puro = html_puro
+        self.conteudo = conteudo
+        self.campus = campus
+        self.url = url
+        self.coletado_em = coletado_em
