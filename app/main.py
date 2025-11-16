@@ -1,17 +1,20 @@
 from fastapi import FastAPI, HTTPException
-from database.database import init_db
-from repository.repository import (
+from app.database.database import init_db
+from app.repository.repository import (
     salvar_noticia, buscar_todas, buscar_por_id,
     atualizar_noticia, deletar_noticia
 )
-from schemas.schema import NoticiaCreate, NoticiaUpdate, NoticiaResponse
+from app.schemas.schema import NoticiaCreate, NoticiaUpdate, NoticiaResponse
+from contextlib import asynccontextmanager
 
-app = FastAPI(title="CRUD de Notícias IFPE")
-
-@app.on_event("startup")
-def startup_event():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    print("Iniciando aplicação...")
     init_db()
+    yield
+    print("Encerrando aplicação...")
 
+app = FastAPI(title="Buscador de notícias do IFPE", lifespan=lifespan)
 
 # GET ALL
 @app.get("/noticias", response_model=list[NoticiaResponse])

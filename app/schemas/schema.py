@@ -6,10 +6,18 @@ class NoticiaCreate(BaseModel):
     campus: str
     url: str
 
+    model_config = {
+        "from_attributes": True
+    }
+
 class NoticiaUpdate(BaseModel):
     titulo: str | None = None
     conteudo: str | None = None
     campus: str | None = None
+
+    model_config = {
+        "from_attributes": True
+    }
 
 class NoticiaResponse(BaseModel):
     id: int
@@ -18,5 +26,6 @@ class NoticiaResponse(BaseModel):
     campus: str
     url: str
 
-    class Config:
-        orm_mode = True
+    model_config = {
+        "from_attributes": True
+    }
