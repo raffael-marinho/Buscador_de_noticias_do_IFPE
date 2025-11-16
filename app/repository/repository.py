@@ -5,9 +5,9 @@ def salvar_noticia(noticia):
     cursor = conn.cursor()
 
     cursor.execute("""
-        INSERT INTO noticias (titulo, conteudo, campus, url)
-        VALUES (?, ?, ?, ?)
-    """, (noticia["titulo"], noticia["conteudo"], noticia["campus"], noticia["url"]))
+        INSERT INTO noticias (titulo, html_puro, conteudo, campus, url, coletado_em)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, (noticia.titulo, noticia.html_puro, noticia.conteudo, noticia.campus, noticia.url, noticia.coletado_em))
 
     conn.commit()
     last_id = cursor.lastrowid
