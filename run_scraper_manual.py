@@ -1,4 +1,5 @@
 from app.scraper.scraper import run_full_scrape
+from app.service.service import processar_lista_de_noticias
 import json 
 
 if __name__ == "__main__":
@@ -7,6 +8,7 @@ if __name__ == "__main__":
     noticias = run_full_scrape()
     
     if noticias:
+        processar_lista_de_noticias(noticias)
         print(f"\nTotal de notícias extraídas: {len(noticias)}")
 
     else:
