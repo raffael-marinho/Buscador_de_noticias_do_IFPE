@@ -117,6 +117,15 @@ def scrape_campus_news(campus_name, list_url):
     
     return news_list
 
+def extract_minified_html_document_from_news(news_url):
+    response = requests.get(news_url, headers=HEADERS, timeout=15)
+    response.raise_for_status()
+    response.encoding = response.apparent_encoding
+    response_content = response.text
+    minified_html = re.sub(r">\s+<", "><", response_content)
+    minified_html = re.sub(r"\s+", " ", minified_html).strip()
+    return minified_html
+
 def run_full_scrape():
     all_news = []
     print("\n" + "="*70)
