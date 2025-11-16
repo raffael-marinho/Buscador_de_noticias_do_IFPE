@@ -19,9 +19,11 @@ def init_db():
         CREATE TABLE IF NOT EXISTS noticias (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             titulo TEXT,
+            html_puro TEXT,
             conteudo TEXT,
             campus TEXT,
-            url TEXT UNIQUE
+            url TEXT UNIQUE,
+            coletado_em TEXT
         );
     """)
 
