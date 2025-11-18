@@ -5,7 +5,9 @@ import json
 if __name__ == "__main__":
     print("Iniciando scraper manual...")
     
-    noticias = run_full_scrape()
+    depth_for_page = 5
+
+    noticias = run_full_scrape(depth_for_page)
     
     if noticias:
         processar_lista_de_noticias(noticias)

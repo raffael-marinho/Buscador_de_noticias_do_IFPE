@@ -45,80 +45,88 @@ def parse_full_article_content(article_url):
     
     return "Conteudo nao disponivel"
 
-def scrape_campus_news(campus_name, list_url):
+def scrape_campus_with_pagination(campus_name, base_url, depth_per_campus):
     print(f"\n{'='*70}")
-    print(f"Buscando noticias: {campus_name}")
+    print(f"Buscando notícias do campus: {campus_name}")
     print(f"{'='*70}")
-    
-    soup = get_soup(list_url)
-    if not soup:
-        return []
 
-    news_list = []
-    
-    # Busca especificamente por <article class="noticia">
-    articles = soup.find_all('article', class_='noticia')
-    
-    total_encontrados = len(articles)
-    print(f"Total de artigos encontrados: {total_encontrados}")
-    
-    if total_encontrados == 0:
-        print("Nenhum artigo encontrado. A estrutura do site pode ter mudado.\n")
-        return []
-    
-    print(f"\nExtraindo as 5 primeiras noticias:\n")
-    
-    # Processa apenas os 5 primeiros
-    for idx, article in enumerate(articles[:5], 1):
-        try:
-            # Pega o link principal da noticia
-            link = article.find('a', class_='noticia__link')
-            
-            if not link:
-                print(f"[{idx}] Aviso: Link nao encontrado, pulando...")
-                continue
-            
-            url_noticia = link.get('href', '')
-            
-            if not url_noticia:
-                continue
-            
-            # Pega o titulo
-            titulo_element = article.find('h2', class_='noticia__titulo')
-            
-            if not titulo_element:
-                print(f"[{idx}] Aviso: Titulo nao encontrado, pulando...")
-                continue
-            
-            titulo = titulo_element.get_text(strip=True)
-            
-            # Remove caracteres HTML especiais
-            titulo = titulo.replace('&#8217;', "'").replace('&#8220;', '"').replace('&#8221;', '"')
-            
-            print(f"[{idx}] {titulo}")
-            print(f"    URL: {url_noticia}\n")
-            
-            dados_da_noticia = extract_relevant_data_from_news(url_noticia)
+    noticias_coletadas = []
+    pagina = 1
 
-            news_data = {
+    while len(noticias_coletadas) < depth_per_campus:
+
+        # Monta URL da página
+        if pagina == 1:
+            page_url = base_url
+        else:
+            page_url = f"{base_url}/page/{pagina}"
+
+        print(f"\nPágina {pagina}: {page_url}")
+
+        soup = get_soup(page_url)
+        if not soup:
+            print("Erro ao carregar a página. Parando.")
+            break
+
+        # Extrai artigos da página
+        artigos = soup.find_all("article", class_="noticia")
+
+        if not artigos:
+            print("Nenhum artigo encontrado — fim da paginação.")
+            break
+
+        print(f"{len(artigos)} artigos encontrados na página {pagina}")
+
+        # Processa os artigos da página
+        for artigo in artigos:
+            if len(noticias_coletadas) >= depth_per_campus:
+                break
+
+            link_el = artigo.find("a", class_="noticia__link")
+            titulo_el = artigo.find("h2", class_="noticia__titulo")
+
+            if not link_el or not titulo_el:
+                continue
+
+            link = link_el.get("href")
+            titulo = titulo_el.get_text(strip=True)
+
+            print(f"--- {titulo};")
+
+            dados_da_noticia = extract_relevant_data_from_news(link)
+
+            noticia = {
                 "titulo": titulo,
                 "html_puro": dados_da_noticia["html_puro"],
                 "conteudo": dados_da_noticia["conteudo"],
                 "campus": campus_name,
-                "url": url_noticia,
+                "url": link,
                 "coletado_em": str(time.time())
             }
-            news_list.append(news_data)
-            
+
+            noticias_coletadas.append(noticia)
+
             time.sleep(0.3)
 
-        except Exception as e:
-            print(f"[{idx}] Erro ao processar item: {e}")
-            continue
+        # Verificar se existe próxima página
+        pagination_links = soup.select("li.page-item a.page-link")
 
-    print(f"Total extraido de {campus_name}: {len(news_list)} noticias\n")
-    
-    return news_list
+        if not pagination_links:
+            print("\nSem paginação encontrada. Fim.")
+            break
+
+        last_text = pagination_links[-1].get_text(strip=True).lower()
+
+        if "próxima" in last_text or "próximo" in last_text:
+            pagina += 1
+            continue
+        else:
+            print("\nÚltima página alcançada.")
+            break
+
+    print(f"\nTotal coletado para {campus_name}: {len(noticias_coletadas)} notícias\n")
+    return noticias_coletadas
+
 
 def extract_main_news_content(given_soup):
     main_news_content_element = given_soup.find('div', class_='post__content')
@@ -141,26 +149,18 @@ def extract_relevant_data_from_news(news_url):
     minified_html = re.sub(r"\s+", " ", minified_html).strip()
     return {"conteudo": main_news_content, "html_puro": minified_html}
 
-def get_max_pages_number_from_news_list(news_page_soup):
-    pagination_links = news_page_soup.select("li.page-item a.page-link")
-    second_last_link_text = pagination_links[-2].get_text(strip=True)
-    if(str(second_last_link_text).isnumeric()):
-        return second_last_link_text
-        
-    return None
-
-def run_full_scrape():
+def run_full_scrape(depth_per_campus):
     all_news = []
     print("\n" + "="*70)
     print("INICIANDO SCRAPER DO IFPE")
     print("="*70)
-    
+
     for campus, url in TARGET_URLS.items():
-        campus_news = scrape_campus_news(campus, url)
-        all_news.extend(campus_news)
-    
+        noticias = scrape_campus_with_pagination(campus, url, depth_per_campus)
+        all_news.extend(noticias)
+
     print("="*70)
-    print(f"CONCLUIDO: {len(all_news)} noticias extraidas no total")
+    print(f"CONCLUÍDO: {len(all_news)} notícias extraídas no total")
     print("="*70 + "\n")
-    
+
     return all_news
