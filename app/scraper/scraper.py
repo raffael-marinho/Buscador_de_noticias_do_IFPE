@@ -98,9 +98,6 @@ def scrape_campus_news(campus_name, list_url):
             print(f"[{idx}] {titulo}")
             print(f"    URL: {url_noticia}\n")
             
-            # Extrai conteudo (desabilitado para velocidade)
-            conteudo = extract_main_news_content(soup)
-
             dados_da_noticia = extract_relevant_data_from_news(url_noticia)
 
             news_data = {
@@ -143,6 +140,14 @@ def extract_relevant_data_from_news(news_url):
     minified_html = re.sub(r">\s+<", "><", response_content)
     minified_html = re.sub(r"\s+", " ", minified_html).strip()
     return {"conteudo": main_news_content, "html_puro": minified_html}
+
+def get_max_pages_number_from_news_list(news_page_soup):
+    pagination_links = news_page_soup.select("li.page-item a.page-link")
+    second_last_link_text = pagination_links[-2].get_text(strip=True)
+    if(str(second_last_link_text).isnumeric()):
+        return second_last_link_text
+        
+    return None
 
 def run_full_scrape():
     all_news = []
