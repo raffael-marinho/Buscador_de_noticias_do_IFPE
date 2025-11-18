@@ -4,6 +4,7 @@
 - pip install lxml
 - pip install fastapi
 - pip install uvicorn
+- pip install dotenv
 
 # Rodar o Projeto
 - python run_scraper_manual.py
