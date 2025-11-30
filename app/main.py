@@ -7,7 +7,7 @@ from app.repository.repository import (
 from app.schemas.schema import NoticiaCreate, NoticiaUpdate, NoticiaResponse
 from contextlib import asynccontextmanager
 
-from app.scraper import run_full_scrape
+from app.scraper.scraper import run_full_scrape
 from app.service.service import processar_lista_de_noticias
 from app.service.search_service import realizar_busca_ordenada
 
