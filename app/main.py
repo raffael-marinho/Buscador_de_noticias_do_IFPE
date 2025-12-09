@@ -7,6 +7,10 @@ from app.repository.repository import (
 from app.schemas.schema import NoticiaCreate, NoticiaUpdate, NoticiaResponse
 from contextlib import asynccontextmanager
 
+from app.scraper.scraper import run_full_scrape
+from app.service.service import processar_lista_de_noticias
+from app.service.search_service import realizar_busca_ordenada
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("Iniciando aplicação...")
@@ -15,6 +19,35 @@ async def lifespan(app: FastAPI):
     print("Encerrando aplicação...")
 
 app = FastAPI(title="Buscador de notícias do IFPE", lifespan=lifespan)
+
+@app.post("/atualizar-base")
+def atualizar_base_de_dados():
+    """
+    Roda o scraper, pega as notícias da internet e salva no banco.
+    """
+    print("Iniciando Scraper via API...")
+    lista_bruta = run_full_scrape()
+    
+    lista_salva = processar_lista_de_noticias(lista_bruta)
+    
+    return {
+        "mensagem": "Banco atualizado com sucesso",
+        "total_novas": len(lista_salva)
+    }
+
+@app.get("/buscar")
+def buscar_noticias(q: str):
+    """
+    Faz a busca usando TF-IDF e Similaridade de Cosseno.
+    Uso: /buscar?q=tecnologia
+    """
+    resultados = realizar_busca_ordenada(q)
+    
+    return {
+        "termo": q,
+        "total": len(resultados),
+        "resultados": resultados
+    }
 
 # GET ALL
 @app.get("/noticias", response_model=list[NoticiaResponse])
