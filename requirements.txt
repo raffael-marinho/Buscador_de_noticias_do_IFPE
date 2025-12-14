@@ -4,4 +4,6 @@ requests
 beautifulsoup4
 lxml
 dotenv
+pydantic
+numpy
 scikit-learn
