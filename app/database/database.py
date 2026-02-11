@@ -4,7 +4,8 @@ from dotenv import load_dotenv, find_dotenv
 
 load_dotenv(find_dotenv())
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_PATH = os.environ.get("PROJECT_BASE_DIR")
+BASE_DIR = os.path.dirname(os.path.abspath(BASE_PATH))
 DB_FILE = os.environ.get("DATABASE_FILE")
 DB_PATH = os.path.join(BASE_DIR, DB_FILE)
 
