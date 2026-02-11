@@ -5,14 +5,23 @@ def salvar_noticia(noticia):
     cursor = conn.cursor()
 
     cursor.execute("""
-        INSERT INTO noticias (titulo, html_puro, conteudo, campus, url, coletado_em)
-        VALUES (?, ?, ?, ?, ?, ?)
-    """, (noticia["titulo"], noticia["html_puro"], noticia["conteudo"], noticia["campus"], noticia["url"], noticia["coletado_em"]))
+        SELECT id FROM noticias WHERE url = ? LIMIT 1
+    """, (noticia["url"],))
 
-    conn.commit()
-    last_id = cursor.lastrowid
+    row_exists = cursor.fetchone()
+
+    if not row_exists: 
+        cursor.execute("""
+            INSERT INTO noticias (titulo, html_puro, conteudo, campus, url, coletado_em)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (noticia["titulo"], noticia["html_puro"], noticia["conteudo"], noticia["campus"], noticia["url"], noticia["coletado_em"]))
+        conn.commit()
+        last_id = cursor.lastrowid
+        conn.close()
+        return last_id
+    
     conn.close()
-    return last_id
+    return None
 
 
 def buscar_todas():
