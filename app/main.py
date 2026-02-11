@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from app.database.database import init_db
 from app.repository.repository import (
     salvar_noticia, buscar_todas, buscar_por_id,
@@ -11,6 +12,10 @@ from app.scraper.scraper import run_full_scrape
 from app.service.service import processar_lista_de_noticias
 from app.service.search_service import realizar_busca_ordenada, construir_indice
 
+origins = [
+    "http://localhost:4200",
+]
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("Iniciando aplicação...")
@@ -19,6 +24,14 @@ async def lifespan(app: FastAPI):
     print("Encerrando aplicação...")
 
 app = FastAPI(title="Buscador de notícias do IFPE", lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.post("/atualizar-base")
 def atualizar_base_de_dados():
